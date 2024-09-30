@@ -16,6 +16,8 @@ def main():
     print(graph.get_adjacent_vertices('a'))
     graph.visualize()
     print(graph.bfs('a'))
+    print(graph.dfs('a'))
+    print(graph.dijkstra('a'))
 
 
 if __name__ == '__main__':
