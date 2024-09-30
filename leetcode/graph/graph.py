@@ -1,11 +1,12 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from collections import deque
+from collections import deque, defaultdict
+import heapq
 
 class Graph:
     def __init__(self, vertices: list, edges: dict, orientation: str = 'undirected', weighted: bool = False):
         self.vertices = vertices
-        self.edges = edges
+        self.edges = edges  # Should be a dictionary with adjacency lists
         self.orientation = orientation.lower()
         self.weighted = weighted
 
@@ -15,11 +16,12 @@ class Graph:
             self.edges[vertex] = []
 
     def add_edge(self, edge: tuple):
-        start, end = edge
+        start, end = edge[:2]
+        weight = edge[2] if self.weighted and len(edge) > 2 else 1  # Default weight is 1
         if start in self.vertices and end in self.vertices:
-            self.edges[start].append(end)
+            self.edges[start].append((end, weight))
             if self.orientation == 'undirected':
-                self.edges[end].append(start)
+                self.edges[end].append((start, weight))
         else:
             print("One or both vertices not found in graph.")
 
@@ -28,22 +30,21 @@ class Graph:
             self.vertices.remove(vertex)
             self.edges.pop(vertex, None)
             for key in self.edges:
-                if vertex in self.edges[key]:
-                    self.edges[key].remove(vertex)
+                self.edges[key] = [(v, w) for v, w in self.edges[key] if v != vertex]
         else:
             print("Vertex not found in graph.")
 
     def remove_edge(self, edge: tuple):
-        start, end = edge
-        if start in self.edges and end in self.edges[start]:
-            self.edges[start].remove(end)
-            if self.orientation == 'undirected' and start in self.edges[end]:
-                self.edges[end].remove(start)
+        start, end = edge[:2]
+        if start in self.edges:
+            self.edges[start] = [(v, w) for v, w in self.edges[start] if v != end]
+            if self.orientation == 'undirected' and end in self.edges:
+                self.edges[end] = [(v, w) for v, w in self.edges[end] if v != start]
         else:
             print("Edge not found in graph.")
 
     def get_adjacent_vertices(self, vertex: str):
-        return self.edges.get(vertex, [])
+        return [v for v, _ in self.edges.get(vertex, [])]
 
     def visualize(self):
         # Assign positions to each vertex in a circular layout
@@ -109,5 +110,55 @@ class Graph:
                     distances[neighbor] = distances[current_vertex] + 1
                     predecessors[neighbor] = current_vertex
                     queue.append(neighbor)
+
+        return distances, predecessors
+
+    def dfs(self, source: str):
+        """
+        Perform Depth-First Search starting from the source vertex.
+        Returns a list of vertices in the order they were visited.
+        """
+        visited = set()
+        traversal_order = []
+
+        def dfs_recursive(vertex):
+            visited.add(vertex)
+            traversal_order.append(vertex)
+            for neighbor, _ in self.edges.get(vertex, []):
+                if neighbor not in visited:
+                    dfs_recursive(neighbor)
+
+        dfs_recursive(source)
+        return traversal_order
+
+    def dijkstra(self, source: str):
+        """
+        Perform Dijkstra's Algorithm starting from the source vertex.
+        Returns a dictionary with distances and predecessors for each vertex.
+        """
+        if not self.weighted:
+            print("Graph is unweighted. Dijkstra's algorithm requires weighted edges.")
+            return None
+
+        distances = {vertex: float('inf') for vertex in self.vertices}
+        predecessors = {vertex: None for vertex in self.vertices}
+        distances[source] = 0
+
+        # Priority queue to select the next vertex with the smallest distance
+        priority_queue = [(0, source)]
+        visited = set()
+
+        while priority_queue:
+            current_distance, current_vertex = heapq.heappop(priority_queue)
+            if current_vertex in visited:
+                continue
+            visited.add(current_vertex)
+
+            for neighbor, weight in self.edges.get(current_vertex, []):
+                distance = current_distance + weight
+                if distance < distances[neighbor]:
+                    distances[neighbor] = distance
+                    predecessors[neighbor] = current_vertex
+                    heapq.heappush(priority_queue, (distance, neighbor))
 
         return distances, predecessors
