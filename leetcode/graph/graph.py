@@ -67,20 +67,25 @@ class Graph:
         # Plot edges
         for start_vertex in self.vertices:
             x_start, y_start = positions[start_vertex]
-            for end_vertex in self.edges[start_vertex]:
+            for end_vertex, weight in self.edges.get(start_vertex, []):
                 x_end, y_end = positions[end_vertex]
                 if self.orientation == 'directed':
                     # Draw arrow for directed graph
-                    dx = x_end - x_start
-                    dy = y_end - y_start
                     ax.annotate(
-                        '', xy=(x_end, y_end), xytext=(x_start, y_start),
+                        '',
+                        xy=(x_end, y_end),
+                        xytext=(x_start, y_start),
                         arrowprops=dict(arrowstyle='->', lw=1.5),
                         zorder=1
                     )
                 else:
                     # Draw line for undirected graph
                     ax.plot([x_start, x_end], [y_start, y_end], 'k-', zorder=1)
+                # Display weights if the graph is weighted
+                if self.weighted:
+                    mid_x = (x_start + x_end) / 2
+                    mid_y = (y_start + y_end) / 2
+                    ax.text(mid_x, mid_y, str(weight), fontsize=10, ha='center', va='center', backgroundcolor='w')
 
         ax.axis('off')
         plt.show()
