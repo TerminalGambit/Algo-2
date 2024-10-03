@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from collections import deque, defaultdict
 import heapq
+from typing import List
 
 class Graph:
     def __init__(self, vertices: list, edges: dict, orientation: str = 'undirected', weighted: bool = False):
@@ -135,6 +136,38 @@ class Graph:
 
         dfs_recursive(source)
         return traversal_order
+
+
+    # Exercice 5: TD2
+    def dfs_iterative(self, G, source: str) -> None:
+        couleur = {}
+        stack: List[int] = []
+        compteur: int = 1
+
+        for u in self.get_adjacent_vertices(source):
+            couleur[u] = "blanc"
+
+        stack.append(source)
+        couleur[source] = "gris"
+
+        while stack:
+            u = stack[-1]
+            print("Debut :", u, compteur)
+            compteur += 1
+
+            for v in self.get_adjacent_vertices(u):
+                if couleur[v] == "blanc":
+                    couleur[v] = "gris"
+                    stack.append(v)
+                    break
+
+            if stack[-1] == u:
+                couleur[u] = None
+                stack.pop()
+                print("Fin :", u, compteur)
+                compteur += 1
+
+
 
     def dijkstra(self, source: str):
         """
